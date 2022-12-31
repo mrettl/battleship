@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <title>Schiffe versenken</title>
+
+    <link rel="stylesheet" href="w3.css">
+    <style>
+      .board {
+        border-collapse: collapse;
+        user-select: none;
+      }
+
+      .board th, .board td {
+        font-size: 12pt;
+        border: 1pt solid;
+        width: 20pt;
+        height: 20pt;
+      }
+
+      .ship {
+        margin: 5pt;
+      }
+
+      .ship td {
+        width: 20pt;
+        height: 20pt;
+      }
+
+      .overlay {
+        position: fixed; 
+        width: 100%; 
+        height: 100%;
+        opacity: 0.8;
+      }
+
+    </style>
+    <script src="battlefield.js"></script>
+  </head>
+  <body>
+    <div id="overlay" class="overlay w3-container w3-aqua">
+      <div class="w3-display-middle">
+
+        <div id="win" class="w3-container w3-green" style="margin: 5pt;">
+          <h1>SUCCESS!</h1>
+        </div>
+
+        <div id="loose" class="w3-container w3-red" style="margin: 5pt;">
+          <h1>FAILURE!</h1>
+        </div>
+
+        <div id="new-game" class="w3-white" style="margin: 5pt;">
+
+          <div class="w3-container w3-black">
+            <h1>new game</h1>
+          </div>
+
+          <div class="w3-container" style="margin-bottom: 5pt;">
+            <label>ship length</label>
+            <input id="new-ship-length" class="w3-input" type="number">
+            <button id="add-ship" class="w3-button w3-black w3-left" onclick="addShipButton()">add</button>
+            <button id="start-game"class="w3-button w3-black w3-right" onclick="startButton()">start</button>
+          </div>
+          
+          <div class="w3-container">
+            <ul id="ship-list" class="w3-ul w3-card-4"></ul>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <header class="w3-container">
+      <h1>Schiffe versenken</h1>
+      <h2 id="user-prompt"></h2>
+      <h2 id="turn"></h2>
+    </header>
+    <article class="w3-container">
+
+      <section class="w3-container">
+        <h2>Enemy Board</h2>
+        <table id="enemy-board" class="board w3-card">
+          <tr><th> </th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th></tr>
+          <tr><th>1</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>2</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>3</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>4</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>5</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>6</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>7</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>8</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+        </table>
+      </section>
+
+      <section class="w3-container">
+        <h2>Friendly Board</h2>
+        <table id="friendly-board" class="board w3-card">
+          <tr><th> </th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th><th>F</th><th>G</th><th>H</th></tr>
+          <tr><th>1</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>2</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>3</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>4</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>5</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>6</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>7</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+          <tr><th>8</th><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td><td> </td></tr>
+        </table>
+      </section>
+
+      <section class="w3-container">
+        <h2>Ships</h2>
+
+        <div id="ships" style="padding: 5pt;" class="w3-card">
+        </div>
+
+      </section>
+    </article>
+
+    <script>
+      requestUpdate()
+    </script>
+  </body>
+</html>
