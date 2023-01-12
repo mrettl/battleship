@@ -6,10 +6,6 @@ public class PlayerState implements IParcelable<PlayerState> {
 	public final ShipLengths unplacedShipLengths;
 	public Board board;
 	
-	/**
-	 * memory free to use by the player (e.g. for caching)
-	 */
-	public transient Object playerMemory;
 	
 	public PlayerState() {
 		this.unplacedShipLengths = new ShipLengths();

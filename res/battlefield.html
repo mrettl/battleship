@@ -18,6 +18,23 @@
         height: 20pt;
       }
 
+      .legend {
+        border-collapse: collapse;
+        user-select: none;
+      }
+
+      .legend td {
+        font-size: 12pt;
+        border: 1pt solid;
+        width: 20pt;
+        height: 20pt;
+      }
+
+      .legend th {
+        font-size: 12pt;
+        text-align: left;
+      }
+
       .ship {
         margin: 5pt;
       }
@@ -34,13 +51,20 @@
         opacity: 0.8;
       }
 
+      section {
+        margin-left: auto;
+        margin-right: auto;
+        width: 250pt;
+      }
+
     </style>
     <script src="battlefield.js"></script>
   </head>
   <body>
-    <div id="overlay" class="overlay w3-container w3-aqua">
-      <div class="w3-display-middle">
+    <div id="overlay">
+      <div class="overlay w3-container w3-aqua"></div>
 
+      <div class="w3-display-middle">
         <div id="win" class="w3-container w3-green" style="margin: 5pt;">
           <h1>SUCCESS!</h1>
         </div>
@@ -50,22 +74,37 @@
         </div>
 
         <div id="new-game" class="w3-white" style="margin: 5pt;">
-
-          <div class="w3-container w3-black">
-            <h1>new game</h1>
+          <div class="w3-container" style="margin-bottom: 5pt;">
+            <input id="is-player1" class="w3-check" type="checkbox" checked>
+            <label for="is-player1" class="w3-text-grey" onclick="setPlayer1()">start first</label>
           </div>
 
           <div class="w3-container" style="margin-bottom: 5pt;">
-            <label>ship length</label>
-            <input id="new-ship-length" class="w3-input" type="number">
-            <button id="add-ship" class="w3-button w3-black w3-left" onclick="addShipButton()">add</button>
-            <button id="start-game"class="w3-button w3-black w3-right" onclick="startButton()">start</button>
+            
+          </div>
+
+          <div class="w3-container" style="margin-bottom: 5pt;">
+            <div>
+              <label for="new-ship-length" class="w3-text-grey">ship length</label>
+            </div>
+            <span class="w3-left">
+              <input id="new-ship-length" class="w3-input" type="number" style="width:50pt">
+            </span>
+            <span class="w3-right">
+              <button id="add-ship"class="w3-button w3-black" onclick="addShipButton()">Add Ship</button>
+            </span>
           </div>
           
+          <div class="w3-container" style="margin-bottom: 5pt;">
+          </div>
+
           <div class="w3-container">
             <ul id="ship-list" class="w3-ul w3-card-4"></ul>
           </div>
-
+          
+          <button id="start-game" class="w3-button w3-black" style="width: 100%;" onclick="startButton()">
+            <h1>Start Game</h1>
+          </button>
         </div>
       </div>
     </div>
@@ -74,8 +113,19 @@
       <h1>Schiffe versenken</h1>
       <h2 id="user-prompt"></h2>
       <h2 id="turn"></h2>
+      <button class="w3-button w3-black" onclick="resetButton()">HOME</button>
     </header>
+
     <article class="w3-container">
+
+      <section class="w3-container">
+        <h2>Legend</h2>
+        <table class="legend w3-card">
+          <tr><td class="w3-red"> </td><th>the strike hit a ship</th></tr>
+          <tr><td class="w3-blue"> </td><th>the strike missed all ships</th></tr>
+          <tr><td class="w3-black"> </td><th>a ship is placed here</th></tr>
+        </table>
+      </section>
 
       <section class="w3-container">
         <h2>Enemy Board</h2>
@@ -117,6 +167,7 @@
     </article>
 
     <script>
+      setInterval(requestUpdate, 1000);
       requestUpdate()
     </script>
   </body>

@@ -1,7 +1,7 @@
 package battleship.model;
 
-import battleship.json.JSONReader;
-import battleship.json.JSONWriter;
+import org.stringtree.json.JSONReader;
+import org.stringtree.json.JSONWriter;
 
 public interface IParcelable<E> {
 	

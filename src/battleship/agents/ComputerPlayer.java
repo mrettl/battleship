@@ -2,6 +2,8 @@ package battleship.agents;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 import battleship.model.Board;
 import battleship.model.GameAction;
@@ -10,20 +12,38 @@ import battleship.model.PlayerState;
 import battleship.util.BoardFieldProbabilities;
 
 public class ComputerPlayer implements IPlayer {
-	private final boolean isPlayer1;
-	private final int difficulty;
+	private int difficulty;
 	
-	public ComputerPlayer(boolean isPlayer1) {
-		this(isPlayer1, 100);
+	private boolean isPlayer1;
+	private GameState state;
+	
+	private boolean hasPrintedResult = false;
+	private ArrayList<Board> cachedBoards;
+
+	
+	public ComputerPlayer() {
+		this(100);
 	}
 	
-	public ComputerPlayer(boolean isPlayer1, int difficulty) {
-		this.isPlayer1 = isPlayer1;
+	public ComputerPlayer(int difficulty) {
 		this.difficulty = difficulty;
+		this.isPlayer1 = true;
+		this.state = null;
 	}
 	
 	@Override
-	public boolean handle(GameState state) {
+	public void setPlayerOrder(boolean isPlayer1) {
+		this.isPlayer1 = isPlayer1;
+	}
+	
+	@Override
+	public void setGameState(GameState state) {
+		this.state = state;
+	}
+	
+	@Override
+	public Future<Boolean> handle() {
+		boolean hasChanged = false;
 		PlayerState myState;
 		PlayerState enemyState;
 		
@@ -36,77 +56,78 @@ public class ComputerPlayer implements IPlayer {
 		}
 		
 		switch(state.action) {
-		case PLACE_SHIPS:			
+		case PLACE_SHIPS:
 			if(myState.unplacedShipLengths.shipLengths.length > 0) {
 				Board board = Board.createRandomBoardPerDepthFirstSearch(
 						myState.board,
 						myState.unplacedShipLengths.shipLengths);
 				
-				synchronized (state) {
+				state.getSynchronized((s) -> {
 					myState.unplacedShipLengths.shipLengths = new int[0];
 					myState.board = board;
 					state.action = GameAction.PLACE_SHIPS_POLICY;
-				}
-				return true;
-			} else {
-				return false;
+				});
+				
+				hasChanged = true;
 			}
+			break;
 		
 		case PLAYER_1_TURN:
 			if(isPlayer1) {
 				int[] field = nextStrike(state, myState, enemyState);
 				
-				synchronized (state) {
+				state.getSynchronized((s) -> {
 					state.action = GameAction.PLAYER_1_TURN_END;
 					enemyState.board = enemyState.board.addStrike(field[0], field[1]);
-				}
-				return true;
-			} else {
-				return false;
+				});
+				
+				hasChanged = true;
 			}
+			break;
 			
 		case PLAYER_2_TURN:
 			if(!isPlayer1) {
 				int[] field = nextStrike(state, myState, enemyState);
 				
-				synchronized (state) {
+				state.getSynchronized((s) -> {
 					state.action = GameAction.PLAYER_2_TURN_END;
 					enemyState.board = enemyState.board.addStrike(field[0], field[1]);
-				}
-				return true;
-			} else {
-				return false;
+				});
+				
+				hasChanged = true;
 			}
+			break;
 		
 		case PLAYER_1_WIN:
 			if(isPlayer1)
 				win();
 			else
 				loose();
-			return false;
+			break;
 		
 		case PLAYER_2_WIN:
 			if(!isPlayer1) 
 				win();
 			else
 				loose();
-			return false;
-			
+			break;
+		
 		default:
-			return false;
 		}
+		
+		CompletableFuture<Boolean> future = new CompletableFuture<>();
+		future.complete(hasChanged);
+		return future;
 	}
 
 	public int[] nextStrike(GameState state, PlayerState myState, PlayerState enemyState) {		
 		BoardFieldProbabilities probabilities = new BoardFieldProbabilities(
 				enemyState.board, state.shipLengths.shipLengths);
 		
-		if(myState.playerMemory == null)
-			myState.playerMemory = new ArrayList<Board>();
+		if(cachedBoards == null)
+			cachedBoards = new ArrayList<Board>();
 		
 		// filter cached boards
-		@SuppressWarnings("unchecked")
-		ArrayList<Board> cachedBoards = (ArrayList<Board>) myState.playerMemory;
 		Iterator<Board> iterator = cachedBoards.iterator();
 		while(iterator.hasNext())
 			if(probabilities.sampleBoard(iterator.next()) == null)
@@ -123,11 +144,19 @@ public class ComputerPlayer implements IPlayer {
 	}
 	
 	public void win() {
+		if(hasPrintedResult)
+			return;
+		
+		hasPrintedResult = true;
 		System.out.println("computer player #" + this.hashCode() + 
 				" (difficulty=" + difficulty + ") wins the game.");
 	}
 
 	public void loose() {
+		if(hasPrintedResult)
+			return;
+		
+		hasPrintedResult = true;
 		System.out.println("computer player #" + this.hashCode() + 
 				" (difficulty=" + difficulty + ") looses the game.");
 	}

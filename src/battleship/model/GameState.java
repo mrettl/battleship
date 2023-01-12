@@ -1,6 +1,8 @@
 package battleship.model;
 
 import java.util.Map;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class GameState implements IParcelable<GameState> {
 	public GameAction action;
@@ -47,5 +49,13 @@ public class GameState implements IParcelable<GameState> {
 	@Override
 	public String toString() {
 		return toJSON();
+	}
+	
+	public synchronized void getSynchronized(Consumer<GameState> updateFunction) {
+		updateFunction.accept(this);
+	}
+	
+	public synchronized <T> T applySynchronized(Function<GameState, T> updateFunction) {
+		return updateFunction.apply(this);
 	}
 }

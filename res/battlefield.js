@@ -74,6 +74,11 @@ state = {
     }
 }
 
+localState = {
+    "shipRotations": [],
+    "isPlayer1": true
+}
+
 function get_enemy_field(row, column) {
     return document.querySelector("#enemy-board tr:nth-child(" + (row+2) + ") td:nth-child(" + (column+2) + ")")
 }
@@ -82,10 +87,16 @@ function get_friendly_field(row, column) {
     return document.querySelector("#friendly-board tr:nth-child(" + (row+2) + ") td:nth-child(" + (column+2) + ")")
 }
 
+function setPlayer1() {
+    checkbox = document.getElementById("is-player1")
+    checkbox.checked = !checkbox.checked;
+    localState["isPlayer1"] = checkbox.checked;
+}
+
 function addShipButton() {
-    var shipLength = Number(document.getElementById("new-ship-length").value)
+    var shipLength = document.getElementById("new-ship-length").valueAsNumber
     addShip(shipLength);
-  }
+}
 
 function addShip(shipLength) {
     if([1, 2, 3, 4, 5, 6, 7, 8].findIndex(v => v == shipLength) > -1) {
@@ -121,12 +132,22 @@ function removeShip(shipLength) {
     update();
 }
 
+function resetButton() {
+    const httpRequest = new XMLHttpRequest()
+    httpRequest.onreadystatechange = onResponse;
+    httpRequest.overrideMimeType("text/plain")
+    httpRequest.open("POST", "/app?reset", true)
+    httpRequest.send("")
+}
+
 function startButton() {
     const httpRequest = new XMLHttpRequest()
     httpRequest.onreadystatechange = onResponse;
     httpRequest.overrideMimeType("text/plain")
     httpRequest.open("POST", "/app?start", true)
-    httpRequest.send("")
+    httpRequest.send(JSON.stringify({
+        "isPlayer1": localState["isPlayer1"]
+    }))
 }
 
 function onResponse(obj) {
@@ -155,6 +176,18 @@ function update() {
     function drag(ev) {}
     function drop(ev) {}
 
+    if(localState["isPlayer1"]) {
+        myPlayerStateName = "playerState1"
+        opositePlayerStateName = "playerState2"
+        playerName = "PLAYER_1"
+        oponentName = "PLAYER_2"
+    } else {
+        myPlayerStateName = "playerState2"
+        opositePlayerStateName = "playerState1"
+        playerName = "PLAYER_2"
+        oponentName = "PLAYER_1"
+    }
+
     // update action
     action = state["action"]
     if(action == "NOT_STARTED") {
@@ -181,7 +214,9 @@ function update() {
             var data = ev.dataTransfer.getData("text");
         
             ship = document.getElementById(data);
-        
+            ship_id = Number(ship.id.split("-")[1])
+            localState["shipRotations"].splice(ship_id, 1)
+
             length = ship.getElementsByTagName("td")["length"]
             rows = ship.getElementsByTagName("tr")["length"]
         
@@ -210,7 +245,7 @@ function update() {
             }))
         }
 
-    } else if(action == "PLAYER_1_TURN") {
+    } else if(action == playerName + "_TURN") {
         document.getElementById("overlay").hidden = true
         document.getElementById("user-prompt").innerText = "click on the enemy board to detect enemy ships"
         document.getElementById("turn").innerText = "turn " + state["turn"]
@@ -223,7 +258,7 @@ function update() {
             httpRequest.send(JSON.stringify([row, col]))
         }
 
-    } else if(action == "PLAYER_1_TURN_END" || action == "PLAYER_2_TURN" || action == "PLAYER_2_TURN_END") {
+    } else if(action == "PLAYER_1_TURN_END" || action == oponentName + "_TURN" || action == "PLAYER_2_TURN_END") {
         document.getElementById("overlay").hidden = false
         document.getElementById("win").hidden = true
         document.getElementById("loose").hidden = true
@@ -231,7 +266,7 @@ function update() {
         document.getElementById("user-prompt").innerText = "wait"
         document.getElementById("turn").innerText = "turn " + state["turn"]
 
-    } else if(action == "PLAYER_1_WIN") {
+    } else if(action == playerName + "_WIN") {
         document.getElementById("overlay").hidden = false
         document.getElementById("win").hidden = false
         document.getElementById("loose").hidden = true
@@ -241,7 +276,7 @@ function update() {
         
         show_enemy_ship = true;
 
-    } else if(action == "PLAYER_2_WIN") {
+    } else if(action == oponentName + "_WIN") {
         document.getElementById("overlay").hidden = false
         document.getElementById("win").hidden = true
         document.getElementById("loose").hidden = false
@@ -270,28 +305,40 @@ function update() {
         document.getElementById("start-game").disabled = false; 
     }
 
-    unplacedShipLengths = state["playerState1"]["unplacedShipLengths"]
-        shipHtml = "";
-        for(let i = 0; i < unplacedShipLengths.length; i++) {
-            shipLength = unplacedShipLengths[i]
-            shipHtml += '<table id="ship-' + i + '" class="board w3-grey w3-hover-shadow w3-card ship" draggable="true">'
-            shipHtml += '<td> </td>'.repeat(shipLength)
-            shipHtml += '</table>'
-        }
-        document.getElementById("ships").innerHTML = shipHtml;
+    unplacedShipLengths = state[myPlayerStateName]["unplacedShipLengths"]
+    shipRotations = localState["shipRotations"]
+    shipHtml = "";
+    for(let i = 0; i < unplacedShipLengths.length; i++) {
+        if(shipRotations.length <= i)
+            shipRotations.push(false)
 
-        document.querySelectorAll(".ship").forEach(function(ship) {
-            ship.ondragstart = drag;
-            ship.onclick = function() {
-                length = ship.getElementsByTagName("td")["length"]
-                rows = ship.getElementsByTagName("tr")["length"]
-                if(rows == 1) {
-                    ship.innerHTML = "<tr><td> </td></tr>".repeat(length);
-                } else {
-                    ship.innerHTML = "<tr>" + ("<td> </td>".repeat(length)) + "</tr>";
-                }
-            };
-        });
+        shipLength = unplacedShipLengths[i]
+        shipHtml += '<table id="ship-' + i + '" class="board w3-grey w3-hover-shadow w3-card ship" draggable="true">'
+        if(shipRotations[i]) {
+            shipHtml += "<tr><td> </td></tr>".repeat(shipLength);
+        } else {
+            shipHtml += "<tr>" + ("<td> </td>".repeat(shipLength)) + "</tr>";
+        }
+
+        shipHtml += '</table>'
+    }
+    document.getElementById("ships").innerHTML = shipHtml;
+
+    document.querySelectorAll(".ship").forEach(function(ship) {
+        ship.ondragstart = drag;
+        ship.onclick = function() {
+            index = Number(ship.id.split("-")[1])
+            length = ship.getElementsByTagName("td")["length"]
+            rows = ship.getElementsByTagName("tr")["length"]
+            shipRotations[index] = !shipRotations[index]
+
+            if(shipRotations[index]) {
+                ship.innerHTML = "<tr><td> </td></tr>".repeat(length);
+            } else {
+                ship.innerHTML = "<tr>" + ("<td> </td>".repeat(length)) + "</tr>";
+            }
+        };
+    });
 
     // update enemy board
     function get_enemy_field_class_name(is_ship, is_strike) {
@@ -305,8 +352,8 @@ function update() {
             return null;
         }
     }
-    ships2 = state["playerState2"]["board"]["placedShips"]
-    strikes2 = state["playerState2"]["board"]["strikes"]
+    ships2 = state[opositePlayerStateName]["board"]["placedShips"]
+    strikes2 = state[opositePlayerStateName]["board"]["strikes"]
 
     for(let row = 0; row < 8; row++) {
         for(let col = 0; col < 8; col++) {
@@ -340,8 +387,8 @@ function update() {
             return null;
         }
     }
-    ships1 = state["playerState1"]["board"]["placedShips"]
-    strikes1 = state["playerState1"]["board"]["strikes"]
+    ships1 = state[myPlayerStateName]["board"]["placedShips"]
+    strikes1 = state[myPlayerStateName]["board"]["strikes"]
 
     for(let row = 0; row < 8; row++) {
         for(let col = 0; col < 8; col++) {

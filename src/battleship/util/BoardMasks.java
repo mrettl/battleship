@@ -5,8 +5,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import battleship.json.JSONReader;
-import battleship.json.JSONWriter;
+import org.stringtree.json.JSONReader;
+import org.stringtree.json.JSONWriter;
 
 public class BoardMasks {
 	
