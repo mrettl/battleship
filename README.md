@@ -55,7 +55,7 @@ Friendly ships on the "Friendly Board" are marked black.
 
 ![Legend](doc/08_legend.png)
 
-After you clicked on a field, the PC-Player immediately guesses a field on your field.
+After you clicked on a field, the PC-Player immediately guesses a field on your board.
 
 ![Enemy Hit](doc/07_enemy_guess.png)
 
@@ -71,7 +71,7 @@ The opponent has discovered all five ships and his next strike on "H7" will dest
 
 ![Enemy Last Guess](doc/11_enemy_last_guess.png)
 
-The end of the game is schonw either by a
+The end of the game is schown either by a
 
 ![Failure](doc/12_failure.png)
 
